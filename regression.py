@@ -17,7 +17,50 @@ def predict_price(area) -> float:
     """
     response = requests.get(TRAIN_DATA_URL)
     # YOUR IMPLEMENTATION HERE
-    ...
+    # Read the CSVs
+    df_train = pandas.read_csv(TRAIN_DATA_URL, header=None)
+    df_test = pandas.read_csv(TEST_DATA_URL, header=None)
+    
+    # Transpose them
+    df_train = df_train.transpose()
+    df_test = df_test.transpose()
+    # Set column name and drop the name row
+    df_train.columns = df_train.loc[0]
+    df_test.columns = df_test.loc[0]
+    df_train.drop(0, inplace=True)
+    df_test.drop(0, inplace=True)
+
+    df_train = df_train.reset_index().drop(columns=['index'])
+    df_test = df_test.reset_index().drop(columns=['index'])
+
+    x_train = df_train.iloc[:, 0].to_numpy()
+    y_train = df_train.iloc[:, 1].to_numpy()
+
+    # min max scaling
+    mn_a = numpy.min(x_train)
+    mx_a = numpy.max(x_train)
+    x_train = (x_train - mn_a)/(mx_a - mn_a)
+
+    mn_p = numpy.min(y_train)
+    mx_p = numpy.max(y_train)
+    y_train = (y_train - mn_p)/(mx_p - mn_p)
+
+    w = 1
+    b = 1
+    lr = 1e-5
+    grad_w = 1
+    grad_b = 1
+
+    while abs(grad_w)+abs(grad_b) > 1e-4:
+        grad_w = -2 * numpy.sum(numpy.multiply(y_train - w * x_train - b, x_train))
+        grad_b = -2 * numpy.sum(y_train - w * x_train - b)
+        w = w - lr*grad_w
+        b = b - lr*grad_b
+    
+    w_real = w * (mx_p - mn_p)/(mx_a - mn_a)
+    b_real = (b - w * (mn_a)/(mx_a - mn_a))*(mx_p - mn_p) + mn_p
+    
+    return w_real * area + b_real
 
 
 if __name__ == "__main__":
